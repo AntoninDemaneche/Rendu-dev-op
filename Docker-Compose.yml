@@ -1,0 +1,42 @@
+version: "3.3"
+
+services:
+    haproxy:
+     image: dockercloud/hello-world
+     deploy:
+    replicas: 3
+    resources:
+     limits:
+        cpus: "0.1"
+        memory: 50M
+    update_config:
+        parallelism: 1
+        delay: 10s
+    reservations:
+        cpus: '0.1'
+        memory: 50M
+    restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+    placement:
+        constraints:
+            - "node.labels.loadbalanced == true"
+            - "node.role == manager"
+    environment:
+        - RELOAD_TIMEOUT=-1
+        - HEALTH_CHECK=check inter 2000 rise 2 fall 3
+        - EXTRA_GLOBAL_SETTINGS=spread-checks 5
+       
+    ports:
+        - target : 443
+        published : 443
+        protocol: tcp
+        mode: ingress
+    volumes :
+        -'/var/run/docker.sock:/run/docker.sock'
+    networks:
+        - proxy
+networks:
+ proxy:
+ external: true
